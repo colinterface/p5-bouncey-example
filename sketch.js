@@ -20,15 +20,20 @@ function setup() {
 
 function draw() {
   background("#222");
-  // if (mouseIsPressed) {
-  //   particles.push(new Particle(mouseX, mouseY, particleSize));
-  // }
+  if (mouseIsPressed) {
+    var particle = new Particle(mouseX, mouseY, particleSize)
+    particle.index = particles.push(particle) - 1;
+  }
 
   particles.forEach(function(particle) {
-    particle.move();
-    particle.display();
+    if (particle) {
+      particle.move();
+      particle.display();
+    }
   });
 }
+
+
 
 function keyPressed() {
   if (keyCode === 32) {
@@ -44,6 +49,10 @@ function mouseClicked() {
   particles.push(new Particle(mouseX, mouseY, particleSize));
 }
 
+function removeParticle(particle){
+ particles[particle.index] = undefined;
+}
+
 function Particle(x, y, size) {
   this.x = x;
   this.y = y;
@@ -51,40 +60,42 @@ function Particle(x, y, size) {
   this.horizontalSpeed = random(-maxSpeed, maxSpeed);
   this.verticalSpeed = random(-maxSpeed, maxSpeed);
   this.bounces = 0;
-  this.enabled = true;
+}
 
-  this.move = function() {
+Particle.prototype.display = function() {
+  ellipse(this.x, this.y, this.size, this.size)
+};
 
-    if (this.x > width || this.x < 0) {
-      this.horizontalSpeed *= -0.7;
-      this.bounces++;
-      if (this.bounces > maxBounces) {
-        this.enabled = false;
-      }
-      this.enabled && bounceSound.play();
+Particle.prototype.move = function() {
+  if (this.x > width || this.x < 0) {
+    this.horizontalSpeed *= -0.7;
+    this.bounces++;
+    if (this.bounces > maxBounces) {
+      return removeParticle(this);
     }
-
-    if (this.y > height || this.y <= 0) {
-      console.log("BOUNCING ON BOTTOM");
-      this.verticalSpeed *= -0.7;
-      this.bounces++;
-      if (this.bounces > maxBounces) {
-        this.enabled = false;
-      }
-      this.enabled && bounceSound.play();
-    }
-
-    if (gravityEnabled) {
-      this.verticalSpeed += 0.7;
-    }
-
-    this.x += this.horizontalSpeed;
-    this.y += this.verticalSpeed;
+    this.playSound();
   }
 
-  this.display = function() {
-    this.enabled && ellipse(this.x, this.y, this.size, this.size)
+  if (this.y > height || this.y <= 0) {
+    console.log("BOUNCING ON BOTTOM");
+    this.verticalSpeed *= -0.7;
+    this.bounces++;
+    if (this.bounces > maxBounces) {
+      return removeParticle(this);
+    }
+    this.playSound();
   }
 
+  if (gravityEnabled) {
+    this.verticalSpeed += 0.7;
+  }
 
+  this.x += this.horizontalSpeed;
+  this.y += this.verticalSpeed;
+};
+
+Particle.prototype.playSound = function() {
+  // debounce
+  // this.bounces
+  bounceSound.play();
 }
